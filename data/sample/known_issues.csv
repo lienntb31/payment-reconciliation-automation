@@ -1,0 +1,3 @@
+recon_key,recon_control,issue_category,issue_note
+T004,CONTROL_1,KNOWN_AMOUNT_DIFFERENCE,Synthetic known exception for demonstration
+R003,CONTROL_5,KNOWN_TIMING_DIFFERENCE,Synthetic known timing scenario
