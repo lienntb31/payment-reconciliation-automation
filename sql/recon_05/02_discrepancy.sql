@@ -1,5 +1,6 @@
--- Control 5: Repayment -> Settlement
--- Supports direct and grouped settlement.
+-- Control 5A: Repayment -> Funding (Settlement) Module
+-- Supports direct and grouped settlement reconciliation.
+-- Stage 2 (Funding Module -> Bank Statement) is in 04_discrepancy_bank.sql.
 
 WITH repayment_pool AS (
 
@@ -202,7 +203,7 @@ known_issue_mapping AS (
 
     FROM known_issues
 
-    WHERE recon_control = 'CONTROL_5'
+    WHERE recon_control = 'CONTROL_5A'
 )
 
 SELECT

@@ -22,3 +22,17 @@ BANK_B_FILE_PREFIX = "BANK_B_STATEMENT"
 API_ENDPOINT = "https://example.com/api/upload"
 INGESTION_TOKEN = "synthetic-token"
 INGESTION_PARENT_DIR = "payment_reconciliation"
+
+
+# Synthetic Trino configuration
+# Replace with environment variables if a real cluster is ever connected.
+TRINO_HOST = "localhost"
+TRINO_PORT = 8080
+TRINO_USER = "synthetic-user"
+TRINO_CATALOG = "synthetic_catalog"
+TRINO_SCHEMA = "synthetic_schema"
+
+
+# Synthetic Google Sheets configuration
+GSHEET_SERVICE_ACCOUNT_FILE = "service_account.json"
+GSHEET_SPREADSHEET_NAME = "Payment Reconciliation Outputs"

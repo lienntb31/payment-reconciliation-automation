@@ -1,4 +1,5 @@
--- Control 3: Transaction State B -> Settlement
+-- Control 3A: Transaction State B -> Funding (Settlement) Module
+-- Daily funding-module summary (bank statement summary is in 03_bank_daily.sql)
 
 SELECT
     CAST(settlement_date AS DATE) AS settlement_date,

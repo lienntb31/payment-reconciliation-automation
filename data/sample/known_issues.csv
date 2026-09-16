@@ -1,3 +1,7 @@
 recon_key,recon_control,issue_category,issue_note
 T004,CONTROL_1,KNOWN_AMOUNT_DIFFERENCE,Synthetic known exception for demonstration
-R003,CONTROL_5,KNOWN_TIMING_DIFFERENCE,Synthetic known timing scenario
+T007,CONTROL_2,KNOWN_MISSING_STATE_B,Synthetic known exception for demonstration
+T004,CONTROL_3A,KNOWN_AMOUNT_DIFFERENCE,Synthetic known exception for demonstration
+S999,CONTROL_3B,KNOWN_MISSING_FUNDING,Synthetic known exception: bank line predates funding record
+R003,CONTROL_5A,KNOWN_TIMING_DIFFERENCE,Synthetic known timing scenario
+S008,CONTROL_5B,KNOWN_AMOUNT_DIFFERENCE,Synthetic known exception for demonstration

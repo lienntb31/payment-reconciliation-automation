@@ -3,3 +3,6 @@ numpy
 requests
 requests-toolbelt
 openpyxl
+trino
+gspread
+google-auth

@@ -80,7 +80,9 @@ Source Event
      ↓
 Transaction Processing
      ↓
-Settlement / External Record
+Funding / Settlement Module
+     ↓
+Bank Statement (external record)
 ```
 
 Two generic scenarios are represented.
@@ -92,7 +94,9 @@ Source Records
      ↓
 Transaction Records
      ↓
-Settlement Records
+Funding (Settlement) Records
+     ↓
+Bank Statement Records
 ```
 
 ### Repayment Scenario
@@ -102,8 +106,15 @@ Payment Records
      ↓
 Repayment Records
      ↓
-Settlement Records
+Funding (Settlement) Records
+     ↓
+Bank Statement Records
 ```
+
+The funding/settlement module sits between the internal transaction records and the
+external bank statement. It is the bridge that carries a common reconciliation key
+(direct, transaction-level or grouped, batch-level) and the latest status the bank
+side has communicated back for that order.
 
 These flows are conceptual only and are not intended to describe any specific production architecture.
 
@@ -111,7 +122,9 @@ These flows are conceptual only and are not intended to describe any specific pr
 
 # 4. Reconciliation Controls
 
-Five controls are implemented:
+Five controls are implemented. Controls 3 and 5 are each split into two stages,
+because the funding/settlement module sits between the internal transaction record
+and the external bank statement:
 
 ```text
 Control 1
@@ -120,14 +133,20 @@ Source → Transaction State
 Control 2
 Transaction State A → Transaction State B
 
-Control 3
-Transaction → Settlement
+Control 3A
+Transaction → Funding (Settlement) Module
+
+Control 3B
+Funding (Settlement) Module → Bank Statement
 
 Control 4
 Payment → Repayment
 
-Control 5
-Repayment → Settlement
+Control 5A
+Repayment → Funding (Settlement) Module
+
+Control 5B
+Funding (Settlement) Module → Bank Statement
 ```
 
 Each control validates a different transition or consistency relationship.
@@ -550,8 +569,12 @@ Control 2
 ├── Transaction Daily Summary
 └── Discrepancy / RCA
 
-Control 3
-├── Settlement Daily Summary
+Control 3A (Transaction -> Funding)
+├── Funding Daily Summary
+└── Discrepancy / RCA
+
+Control 3B (Funding -> Bank Statement)
+├── Bank Statement Daily Summary
 └── Discrepancy / RCA
 
 Control 4
@@ -559,8 +582,12 @@ Control 4
 ├── Repayment Daily Summary
 └── Discrepancy / RCA
 
-Control 5
-├── Settlement Daily Summary
+Control 5A (Repayment -> Funding)
+├── Funding Daily Summary
+└── Discrepancy / RCA
+
+Control 5B (Funding -> Bank Statement)
+├── Bank Statement Daily Summary
 └── Discrepancy / RCA
 ```
 

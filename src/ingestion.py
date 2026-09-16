@@ -8,11 +8,11 @@ warnings.filterwarnings("ignore")
 
 # 3. Data Ingestion via API: Upload CSV files to GCP DataHub and ingest them into SQL tables
 
-def upload(
+def upload_file(
     api_endpoint: str,
     ingestion_token: str,
-    file_name: str,
-    file_parent_dir: str,
+    file_path: str,
+    parent_dir: str,
 ) -> requests.Response | None:
     """
     Upload a file to a data-ingestion API using multipart/form-data.
@@ -25,9 +25,9 @@ def upload(
         Data-ingestion API endpoint.
     ingestion_token : str
         Authentication token for the ingestion API.
-    file_name : str
+    file_path : str
         Path to the file to upload.
-    file_parent_dir : str
+    parent_dir : str
         Destination directory on the ingestion system.
 
     Returns
@@ -36,20 +36,20 @@ def upload(
         API response if the file exists; otherwise None.
     """
 
-    if not os.path.isfile(file_name):
-        print(f"File not found: {file_name}")
+    if not os.path.isfile(file_path):
+        print(f"File not found: {file_path}")
         return None
 
     try:
-        with open(file_name, "rb") as file:
+        with open(file_path, "rb") as file:
             multipart_data = MultipartEncoder(
                 fields={
                     "file": (
-                        os.path.basename(file_name),
+                        os.path.basename(file_path),
                         file,
                         "text/plain",
                     ),
-                    "parent_dir": file_parent_dir,
+                    "parent_dir": parent_dir,
                 }
             )
 
@@ -69,13 +69,13 @@ def upload(
 
         print(
             f"File uploaded successfully: "
-            f"{os.path.basename(file_name)}"
+            f"{os.path.basename(file_path)}"
         )
 
         return response
 
     except requests.RequestException as error:
         print(
-            f"Upload failed for {file_name}: {error}"
+            f"Upload failed for {file_path}: {error}"
         )
         return None

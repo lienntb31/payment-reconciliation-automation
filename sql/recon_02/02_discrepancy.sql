@@ -52,6 +52,15 @@ timing_mapping AS (
     FROM reconciliation_pool
     GROUP BY 1, 2
     HAVING SUM(diff) = DECIMAL '0.00'
+),
+
+known_issue_mapping AS (
+    SELECT
+        recon_key,
+        issue_category,
+        issue_note
+    FROM known_issues
+    WHERE recon_control = 'CONTROL_2'
 )
 
 SELECT
@@ -79,13 +88,19 @@ SELECT
             THEN 'DATE_DIFFERENCE'
 
         ELSE 'OTHER'
-    END AS discrepancy_type
+    END AS discrepancy_type,
+
+    k.issue_category,
+    k.issue_note
 
 FROM reconciliation_pool r
 
 LEFT JOIN timing_mapping t
     ON r.month = t.month
    AND r.recon_key = t.recon_key
+
+LEFT JOIN known_issue_mapping k
+    ON r.recon_key = k.recon_key
 
 WHERE
        r.amount_a IS NULL

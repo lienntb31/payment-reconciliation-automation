@@ -131,12 +131,15 @@ payment_records = pd.DataFrame([
 
 
 # ============================================================
-# 4. SETTLEMENT RECORDS
-#    Control 3 / 5
+# 4. SETTLEMENT / FUNDING RECORDS
+#    Control 3 / 5 - stage A (transaction <> funding module)
 #
 #    Includes:
 #    - direct 1:1 settlement
 #    - grouped settlement
+#    - funding_status: latest status the funding module holds
+#      for that order (surfaced downstream when reconciling
+#      the funding module against the bank statement)
 # ============================================================
 
 settlement_records = pd.DataFrame([
@@ -145,18 +148,18 @@ settlement_records = pd.DataFrame([
     # ========================================================
 
     ["S001", "T001", None, "2026-08-02", 1000.00,
-     "DIRECT", "DISBURSEMENT"],
+     "DIRECT", "DISBURSEMENT", "SETTLED"],
 
     ["S002", "T002", None, "2026-08-02", 2000.00,
-     "DIRECT", "DISBURSEMENT"],
+     "DIRECT", "DISBURSEMENT", "SETTLED"],
 
     # timing/date difference
     ["S003", "T003", None, "2026-08-04", 1500.00,
-     "DIRECT", "DISBURSEMENT"],
+     "DIRECT", "DISBURSEMENT", "SETTLED"],
 
     # amount difference
     ["S004", "T004", None, "2026-08-04", 700.00,
-     "DIRECT", "DISBURSEMENT"],
+     "DIRECT", "DISBURSEMENT", "SETTLED"],
 
     # ========================================================
     # DISBURSEMENT - GROUPED
@@ -164,34 +167,35 @@ settlement_records = pd.DataFrame([
 
     # Two transaction records will reconcile to one settlement group.
     ["S005", None, "G001", "2026-08-06", 1200.00,
-     "GROUPED", "DISBURSEMENT"],
+     "GROUPED", "DISBURSEMENT", "SETTLED"],
 
     ["S006", None, "G001", "2026-08-06", 800.00,
-     "GROUPED", "DISBURSEMENT"],
+     "GROUPED", "DISBURSEMENT", "SETTLED"],
 
     # ========================================================
     # REPAYMENT - DIRECT
     # ========================================================
 
     ["S007", "R001", None, "2026-08-11", 400.00,
-     "DIRECT", "REPAYMENT"],
+     "DIRECT", "REPAYMENT", "SETTLED"],
 
     ["S008", "R002", None, "2026-08-12", 500.00,
-     "DIRECT", "REPAYMENT"],
+     "DIRECT", "REPAYMENT", "SETTLED"],
 
-    # date difference
+    # date difference; funding has not received the bank's
+    # confirmation yet, so it is still PENDING
     ["S009", "R003", None, "2026-08-13", 300.00,
-     "DIRECT", "REPAYMENT"],
+     "DIRECT", "REPAYMENT", "PENDING"],
 
     # ========================================================
     # REPAYMENT - GROUPED
     # ========================================================
 
     ["S010", None, "G002", "2026-08-16", 600.00,
-     "GROUPED", "REPAYMENT"],
+     "GROUPED", "REPAYMENT", "SETTLED"],
 
     ["S011", None, "G002", "2026-08-16", 400.00,
-     "GROUPED", "REPAYMENT"],
+     "GROUPED", "REPAYMENT", "SETTLED"],
 ], columns=[
     "settlement_reference",
     "transaction_id",
@@ -200,6 +204,80 @@ settlement_records = pd.DataFrame([
     "amount",
     "settlement_type",
     "settlement_category",
+    "funding_status",
+])
+
+
+# ============================================================
+# 4B. BANK STATEMENTS
+#     Control 3 / 5 - stage B (funding module <> bank statement)
+#
+#     Bank statement lines are matched back to the funding
+#     module either directly (settlement_reference) or, for
+#     batched payouts, via settlement_group_id.
+# ============================================================
+
+bank_statements = pd.DataFrame([
+    # ========================================================
+    # DISBURSEMENT - DIRECT
+    # ========================================================
+
+    # matched
+    ["BANK-D001", "S001", None, "2026-08-02", 1000.00,
+     "DISBURSEMENT"],
+
+    # date difference vs funding (funding = 2026-08-02)
+    ["BANK-D002", "S002", None, "2026-08-03", 2000.00,
+     "DISBURSEMENT"],
+
+    # matched
+    ["BANK-D003", "S003", None, "2026-08-04", 1500.00,
+     "DISBURSEMENT"],
+
+    # S004 intentionally has no bank statement line (missing on bank side)
+
+    # orphan bank line: no matching funding record
+    ["BANK-D005", "S999", None, "2026-08-07", 300.00,
+     "DISBURSEMENT"],
+
+    # ========================================================
+    # DISBURSEMENT - GROUPED
+    # ========================================================
+
+    # matches funding batch G001 (1200 + 800 = 2000)
+    ["BANK-D004", None, "G001", "2026-08-06", 2000.00,
+     "DISBURSEMENT"],
+
+    # ========================================================
+    # REPAYMENT - DIRECT
+    # ========================================================
+
+    # matched
+    ["BANK-R001", "S007", None, "2026-08-11", 400.00,
+     "REPAYMENT"],
+
+    # amount difference vs funding (funding = 500.00)
+    ["BANK-R002", "S008", None, "2026-08-12", 450.00,
+     "REPAYMENT"],
+
+    # matched (funding status is still PENDING though)
+    ["BANK-R003", "S009", None, "2026-08-13", 300.00,
+     "REPAYMENT"],
+
+    # ========================================================
+    # REPAYMENT - GROUPED
+    # ========================================================
+
+    # matches funding batch G002 (600 + 400 = 1000)
+    ["BANK-R004", None, "G002", "2026-08-16", 1000.00,
+     "REPAYMENT"],
+], columns=[
+    "bank_reference",
+    "settlement_reference",
+    "settlement_group_id",
+    "statement_date",
+    "amount",
+    "statement_category",
 ])
 
 
@@ -249,10 +327,34 @@ known_issues = pd.DataFrame([
         "Synthetic known exception for demonstration",
     ],
     [
+        "T007",
+        "CONTROL_2",
+        "KNOWN_MISSING_STATE_B",
+        "Synthetic known exception for demonstration",
+    ],
+    [
+        "T004",
+        "CONTROL_3A",
+        "KNOWN_AMOUNT_DIFFERENCE",
+        "Synthetic known exception for demonstration",
+    ],
+    [
+        "S999",
+        "CONTROL_3B",
+        "KNOWN_MISSING_FUNDING",
+        "Synthetic known exception: bank line predates funding record",
+    ],
+    [
         "R003",
-        "CONTROL_5",
+        "CONTROL_5A",
         "KNOWN_TIMING_DIFFERENCE",
         "Synthetic known timing scenario",
+    ],
+    [
+        "S008",
+        "CONTROL_5B",
+        "KNOWN_AMOUNT_DIFFERENCE",
+        "Synthetic known exception for demonstration",
     ],
 ], columns=[
     "recon_key",
@@ -298,6 +400,7 @@ datasets = {
     "transaction_events.csv": transaction_events,
     "payment_records.csv": payment_records,
     "settlement_records.csv": settlement_records,
+    "bank_statements.csv": bank_statements,
     "known_issues.csv": known_issues,
     "dq_test_records.csv": dq_test_records,
 }
@@ -321,12 +424,12 @@ for filename in datasets:
     print(f"  - {filename}")
 
 print("\nIntended test scenarios:")
-print("  ✓ Matched records")
-print("  ✓ Missing records")
-print("  ✓ Amount differences")
-print("  ✓ Date differences")
-print("  ✓ Timing differences")
-print("  ✓ Known issue mapping")
-print("  ✓ Direct settlement")
-print("  ✓ Grouped settlement")
-print("  ✓ Basic data-quality issues")
+print("  - Matched records")
+print("  - Missing records")
+print("  - Amount differences")
+print("  - Date differences")
+print("  - Timing differences")
+print("  - Known issue mapping")
+print("  - Direct settlement")
+print("  - Grouped settlement")
+print("  - Basic data-quality issues")

@@ -1,4 +1,5 @@
--- Control 5: Repayment -> Settlement
+-- Control 5A: Repayment -> Funding (Settlement) Module
+-- Daily funding-module summary (bank statement summary is in 03_bank_daily.sql)
 
 SELECT
     CAST(settlement_date AS DATE) AS settlement_date,
